@@ -1,0 +1,173 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.85in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{multicol}
+
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Applied Machine Learning for Business} \\ 
+\large Course Project -- Interim Submission \\ 
+Delivery Delay Prediction for Brazilian E-Commerce}
+
+\author{Avishkar Rawal \and Devyansh Agarwal}
+\date{February 17, 2026 \\ Plaksha University}
+
+\begin{document}
+
+\maketitle
+\vspace{-1em}
+
+%% ============================================================
+%% SECTION 1: PROBLEM AND DECISION  (~half page)
+%% ============================================================
+\section{Problem and Decision}
+
+\textbf{Decision-maker.} Operations Manager at \textbf{Olist}, a Brazilian e-commerce marketplace (27 states, 4,119 cities).
+
+\textbf{The problem.} Of 96,476 delivered orders (Sep 2016 -- Oct 2018), 7,827 (8.1\%) arrived after the platform's estimated delivery date. These late deliveries correlate with a 19$\times$ increase in poor reviews (Figure~\ref{fig:delay_review}), damaging platform trust, seller retention, and customer lifetime value. During Q2 (April--June), order volume surges 11\%, straining logistics and amplifying delay risk.
+
+\textbf{Decision.} At the moment an order is placed before shipping begins should the operations team flag it for \emph{Priority Handling} (expedited warehouse processing, premium carrier, proactive seller notification)? The data shows 7,827 orders needed intervention over 26 months; the model's job is to identify them at placement time so the team can act before delays materialize.
+
+\textbf{Economic assumptions.} We assume: (i) each late delivery costs \textbf{R\$150} in reputation damage, churn risk, and reduced future orders; (ii) priority handling costs \textbf{R\$20} per order (carrier upgrade R\$10, expedited processing R\$7, overhead R\$3); (iii) standard logistics costs R\$5 per order. These are constructed assumptions we do not have Olist's actual cost structure.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& \textbf{Predicted On-Time} & \textbf{Predicted Late} \\ \midrule
+\textbf{Actually On-Time} & R\$5 \; (standard cost) & R\$20 \; (wasted premium) \\
+\textbf{Actually Late} & \textbf{R\$155} \; (R\$150 loss + R\$5 standard) & R\$20 \; (premium prevents loss) \\ \bottomrule
+\end{tabular}
+\caption{Confusion cost matrix (assumed). A false alarm (FP) costs R\$20; a missed late delivery (FN) costs R\$155. The ratio R\$155\,/\,R\$20 $\approx$ \textbf{8:1} drives evaluation toward catching late orders over avoiding false alarms.}
+\label{tab:cost}
+\end{table}
+
+\textbf{Evaluation metric:} $\;\text{Total Cost} = \text{FP} \times 20 + \text{FN} \times 155$, using the costs directly from Table~\ref{tab:cost}. We optimize the decision threshold to minimize this cost, \emph{not} accuracy.
+
+%% ============================================================
+%% SECTION 2: DATA  (~half page)
+%% ============================================================
+\section{Data}
+
+\textbf{Source.} Olist Brazilian E-Commerce Public Dataset (Kaggle), publicly available for academic use. \\
+\textbf{Period.} September 2016 -- October 2018 (26 months). \quad \textbf{Access confirmed:} all tables loaded.
+
+The dataset comprises \textbf{8 relational tables}. The \texttt{Orders} table is the central hub: each order links to its items via \texttt{Order Items} (using \texttt{order\_id}), which in turn references \texttt{Products} (via \texttt{product\_id}) and \texttt{Sellers} (via \texttt{seller\_id}). Customer geography joins through \texttt{Customers} (via \texttt{customer\_id}), and both customer and seller zip codes map to lat/long coordinates via the \texttt{Geolocation} table. \texttt{Payments} and \texttt{Reviews} attach to orders directly via \texttt{order\_id}.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Table} & \textbf{Records} & \textbf{Key Fields} \\ \midrule
+Orders & 99,441 & timestamps, status \\
+Order Items & 112,650 & price, freight, seller\_id \\
+Customers & 99,441 & city, state, zip \\
+Products & 32,951 & category, weight, dimensions \\
+Payments & 103,886 & type, installments, value \\
+Reviews & 99,224 & score (1--5), comments \\
+Sellers & 3,095 & city, state, zip \\
+Geolocation & 1,000,163 & latitude, longitude \\ \bottomrule
+\end{tabular}
+\caption{Dataset structure. Tables join via \texttt{order\_id}, \texttt{customer\_id}, \texttt{product\_id}, \texttt{seller\_id}.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{image.png}
+\caption{Data quality dashboard confirming 97.5\% average completeness across all 8 tables, with dataset sizes and column type distribution.}
+\label{fig:dataquality}
+\end{figure}
+
+\textbf{Target variable (derived):} We construct \texttt{is\_late} from the raw timestamps in the \texttt{Orders} table: \texttt{is\_late} $= 1$ if \texttt{order\_delivered\_customer\_date} $>$ \texttt{order\_estimated\_delivery\_date}; 0 otherwise. This column does not exist in the raw data and is engineered during preprocessing. \\
+\textbf{Distribution:} 88,649 on-time (91.9\%) vs.\ 7,827 late (8.1\%). Class imbalance ratio: 1\,:\,11.3.
+
+\textbf{Key categorical variable:} The \texttt{Products} table contains 74 distinct product categories (e.g., bed\_bath\_table, health\_beauty, sports\_leisure, computers\_accessories, furniture\_decor). Categories vary significantly in late delivery risk, with bulky/heavy categories like furniture showing higher delay rates than lightweight categories like telephony.
+
+\textbf{Sample data} (8 representative orders from the dataset):
+
+\begin{table}[H]
+\centering\scriptsize
+\begin{tabular}{@{}llllrrrcc@{}}
+\toprule
+\textbf{Cust.} & \textbf{Seller} & \textbf{Category} & \textbf{Price} & \textbf{Freight} & \textbf{Wt (g)} & \textbf{Delay (d)} & \textbf{Review} \\ \midrule
+SP & SP & housewares & R\$30 & R\$9 & 1,200 & $-$2.5 & 5 \\
+BA & SP & perfumery & R\$119 & R\$23 & 850 & +1.3 & 3 \\
+RS & SC & auto & R\$160 & R\$19 & 3,500 & $-$5.8 & 5 \\
+RN & SP & pet\_shop & R\$45 & R\$27 & 2,100 & +8.2 & 1 \\
+MG & MG & bed\_bath & R\$90 & R\$15 & 4,200 & $-$1.2 & 4 \\
+SP & SP & sports & R\$199 & R\$12 & 1,800 & $-$6.5 & 5 \\
+CE & PE & telephony & R\$380 & R\$32 & 650 & +4.7 & 2 \\
+PR & SP & furniture & R\$549 & R\$46 & 18,500 & +12.3 & 1 \\ \bottomrule
+\end{tabular}
+\caption{Sample orders. Positive delay = late. Late orders cluster in cross-state, heavy-item routes.}
+\end{table}
+
+%% ============================================================
+%% SECTION 3: SUMMARY STATISTICS  (~half page + figures)
+%% ============================================================
+\section{Summary Statistics}
+
+\textbf{Missing data.} Core features are 97\% complete. Missing delivery dates (2,965 orders, 3\%) correspond to undelivered/canceled orders and are excluded. Product category is missing for 610 items (1.9\%, imputed as ``unknown''). All other fields are fully populated.
+
+\textbf{Non-trivial finding: delivery delay drives poor reviews exponentially.} Figure~\ref{fig:delay_review} shows the poor-review rate (1--3 stars) rises from 19.5\% for on-time orders to 85\% for orders 8--14 days late a \textbf{4.4$\times$ increase}. This is the strongest single predictor of customer dissatisfaction and validates our target variable choice.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{2_review_score_vs_delay.png}
+\caption{Poor review rate by delivery delay category. The steep, monotonic increase confirms that delivery delay is the dominant driver of customer dissatisfaction.}
+\label{fig:delay_review}
+\end{figure}
+
+\textbf{Geographic routing matters.} Cross-state deliveries (55.6\% of orders) have a late rate of 9.0\% vs.\ 6.0\% for same-state a \textbf{1.5$\times$ gap} (Figure~\ref{fig:samestate}). S\~{a}o Paulo accounts for 80.7\% of seller-side orders but only 42\% of customer-side, meaning most shipments travel long distances.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{6_same_state_vs_cross_state.png}
+\caption{Late rate by routing type. Cross-state deliveries carry notably higher delay risk than same-state shipments.}
+\label{fig:samestate}
+\end{figure}
+
+%% ============================================================
+%% SECTION 4: PROPOSED APPROACH  (~half page)
+%% ============================================================
+\section{Proposed Approach}
+
+\textbf{Task:} Binary classification (\texttt{is\_late}, derived from delivery timestamps), predicted at order placement (before shipping).
+
+\textbf{Features (51 total, 9 groups):}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Geographic (6):} Haversine distance (km), same-state/city flags, state-pair historical late rate expected strongest group.
+    \item \textbf{Product (13):} Weight, volume, bulky-item flag, category, category-level late rate.
+    \item \textbf{Temporal (8):} Month, quarter, weekend flag, peak-season indicator (Q2).
+    \item \textbf{Order (6):} Item count, total value, freight cost, freight-to-value ratio (rural proxy).
+    \item \textbf{Payment (7):} Type (one-hot), installments, value.
+    \item \textbf{Seller (3):} Historical order count, late rate, state volume.
+    \item \textbf{Time pressure (3):} Estimated delivery window, urgent/long-window flags.
+    \item \textbf{Interactions (5):} distance$\times$weight, distance$\times$bulky, peak$\times$distance to capture compounding risk.
+\end{itemize}
+
+\textbf{Models:} Logistic Regression (baseline), Random Forest, and XGBoost (primary). Tree-based models handle high cardinality (74 product categories, 27 states), capture non-linear interactions, support class weighting, and provide feature importance for business interpretation.
+
+\textbf{Key challenge: class imbalance} (8.1\% late). We address this via (i) class weights ($11\times$ minority), (ii) SMOTE oversampling, and (iii) threshold tuning. Because 91.9\% of orders are on-time, a model that blindly predicts ``on-time'' for every order would achieve 92\% accuracy while catching zero late orders. This accuracy paradox is why we evaluate on cost, not accuracy.
+
+\textbf{Evaluation:} We minimize $\text{Total Cost} = \text{FP}\times 20 + \text{FN}\times 155$ (Table~\ref{tab:cost}), not accuracy. The optimal threshold is expected below the default 0.5, reflecting the 8:1 cost asymmetry. Secondary metrics: Recall (priority), F1, ROC-AUC.
+
+\textbf{Train/test split:} We will evaluate using both (i) an \textbf{80/20 random split} for standard generalization testing, and (ii) a \textbf{temporal split} (train on 2016--2017, test on 2018) to simulate real-world deployment where the model predicts future orders from past data. Comparing both strategies will reveal whether temporal patterns affect model reliability.
+
+\textbf{Sensitivity analysis:} We will test robustness across four cost scenarios (review loss R\$100--300, intervention cost R\$20--40) to verify that the core insight loss avoidance dominates survives reasonable perturbation of assumptions.
+
+\section*{References}
+\begin{enumerate}[label={[\arabic*]},noitemsep]
+    \item Olist Brazilian E-Commerce Public Dataset. Kaggle. \url{https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce}
+\end{enumerate}
+
+\end{document}

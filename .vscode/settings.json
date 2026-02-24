@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd \"d:\\\\SEM_6\\\\AML\\\\Project\\\\Walmart Data\"; python check_holidays\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

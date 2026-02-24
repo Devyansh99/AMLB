@@ -1,0 +1,12 @@
+Metric,Value
+Total Orders,"99,441"
+Delivered Orders,"110,839"
+Late Deliveries,"8,756"
+On-time Deliveries,"102,083"
+Late Rate,7.9%
+Mean Delivery Time (days),12.5
+Mean Delivery Delay (days),-11.3
+Q2 Peak Orders,"32,818"
+Product Categories,71
+Customer States,27
+Unique Sellers,"2,970"
