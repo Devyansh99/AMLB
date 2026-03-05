@@ -4,14 +4,15 @@
 
 ---
 
-## Current Status (as of Mar 4)
+## Current Status (as of Mar 5)
 - ✅ Interim submitted (Feb 17) — problem defined, data loaded, EDA sketched, feature inventory done
 - ✅ Business framing: Operations Manager, priority-handling decision, cost matrix (FP=R$15, FN=R$155)
 - ✅ Feature inventory: 41 features catalogued across 7 groups (110,196 order-items)
 - ✅ All 3 repos analyzed + research paper read → insights catalogued
-- ❌ Actual merged/cleaned dataset not yet built as a notebook
+- ✅ Phase 1 complete — merged/cleaned dataset built (96,189 rows x 34 cols, 7.94% late rate)
 - ❌ No model trained yet
 - ❌ Economic analysis not yet done
+- ❌ Business analysis not yet done
 - ⏳ Mid-project check-in: **Mar 17–21** (need at least one concrete result)
 
 ---
@@ -21,7 +22,7 @@
 **Deadline is 13–17 days away. Must have concrete results.**
 
 ### What to show:
-- [ ] **Cleaned merged dataset** with shape, feature list, dtypes (proves data pipeline works)
+- [x] **Cleaned merged dataset** with shape, feature list, dtypes (proves data pipeline works) — DONE: 96,189 x 34
 - [ ] **At least one trained baseline model** (Logistic Regression) with real numbers: AUC, recall, cost at threshold=0.5 AND optimal threshold
 - [ ] **One EDA finding with a figure** — best candidate: "Late rate by distance bucket" or "Review score vs delivery delay" (both are strong visually)
 - [ ] **Revised plan** — what remains, biggest risk, timeline to Apr 23
@@ -39,7 +40,7 @@
 ## Phase 1 — Dataset Understanding & Merge (Notebook: `01_data_cleaning.ipynb`)
 
 ### 1.1 Understand Every Table
-- [ ] Print shape, dtypes, head(5) for all 8 tables + `product_category_name_translation.csv`
+- [x] Print shape, dtypes, head(5) for all 8 tables + `product_category_name_translation.csv`
   - `olist_orders_dataset.csv` — timestamps, status (key: filter `order_status == 'delivered'`)
   - `olist_order_items_dataset.csv` — price, freight, seller_id, product_id (multi-item = aggregate per order)
   - `olist_customers_dataset.csv` — customer zip, city, state
@@ -52,30 +53,30 @@
 > **FROM REPO 2:** Translate category names to English early using `product_category_name_translation.csv` — LEFT JOIN on `product_category_name`. Use English names throughout for EDA readability and report.
 
 ### 1.2 Build Target Variable
-- [ ] Keep only `order_status == 'delivered'` (~96,476 rows)
-- [ ] **FROM REPO 1:** Add 11:59:59 buffer to estimated delivery date before comparison:
+- [x] Keep only `order_status == 'delivered'` (~96,476 rows)
+- [x] **FROM REPO 1:** Add 11:59:59 buffer to estimated delivery date before comparison:
   ```python
   orders['order_estimated_delivery_date'] += pd.Timedelta(hours=11, minutes=59, seconds=59)
   ```
   This prevents false-late labels on same-day deliveries. Their late rate = 7.9% vs our strict 8.1%.
-- [ ] `is_late = 1` if `order_delivered_customer_date > order_estimated_delivery_date` else 0
-- [ ] Verify: expected ~7.9–8.1% late (≈7,827 orders)
-- [ ] Drop rows where `order_delivered_customer_date` is null (canceled/in-transit)
-- [ ] **FROM REPO 1:** Drop rows where any timestamp delta is negative (data entry errors):
+- [x] `is_late = 1` if `order_delivered_customer_date > order_estimated_delivery_date` else 0
+- [x] Verify: 7.94% late (7,637 orders out of 96,189) — matches expected range
+- [x] Drop rows where `order_delivered_customer_date` is null (canceled/in-transit)
+- [x] **FROM REPO 1:** Drop rows where any timestamp delta is negative (data entry errors):
   ```python
   # Filter out impossible timestamps
   df = df[df['order_approved_at'] >= df['order_purchase_timestamp']]
   ```
 
 ### 1.3 Geolocation Pre-processing
-- [ ] **FROM REPO 2+3 (both confirm):** Use centroid method — `.groupby(zip).mean()` for lat/lng:
+- [x] **FROM REPO 2+3 (both confirm):** Use centroid method — `.groupby(zip).mean()` for lat/lng:
   ```python
   loc_centroids = geoloc[['geolocation_zip_code_prefix','geolocation_lat','geolocation_lng']]\
       .groupby('geolocation_zip_code_prefix').mean().reset_index()
   ```
   This is better than Repo 1's `.drop_duplicates()` (averages out GPS noise).
 
-- [ ] **FROM REPO 3:** Keep city/state from `.drop_duplicates(subset=['geolocation_zip_code_prefix'])` separately, then merge with centroid lat/lng.
+- [x] **FROM REPO 3:** Keep city/state from `.drop_duplicates(subset=['geolocation_zip_code_prefix'])` separately, then merge with centroid lat/lng.
 
 ### 1.4 Merge Pipeline (step by step, check shape after each join)
 ```
@@ -88,7 +89,7 @@ orders (base)
   → LEFT JOIN geolocation (customer_zip → customer_lat/lon, seller_zip → seller_lat/lon)
 ```
 
-- [ ] **FROM REPO 2:** Rename lat/lng columns immediately after merge to avoid `_x/_y` ambiguity:
+- [x] **FROM REPO 2:** Rename lat/lng columns immediately after merge to avoid `_x/_y` ambiguity:
   ```python
   delivery.rename(columns={
       'geolocation_lat_x': 'customer_lat', 'geolocation_lng_x': 'customer_lng',
@@ -96,7 +97,7 @@ orders (base)
   }, inplace=True)
   ```
 
-- [ ] **FROM REPO 2:** For payment aggregation, use `.sum()` for payment_value but `.max()` for installments (summing installments across payment methods is meaningless):
+- [x] **FROM REPO 2:** For payment aggregation, use `.sum()` for payment_value but `.max()` for installments (summing installments across payment methods is meaningless):
   ```python
   pay_agg = payments.groupby('order_id').agg({
       'payment_value': 'sum',
@@ -105,12 +106,12 @@ orders (base)
   }).reset_index()
   ```
 
-- [ ] **FROM REPO 3:** Drop `payment_type == 'not_defined'` rows before aggregation:
+- [x] **FROM REPO 3:** Drop `payment_type == 'not_defined'` rows before aggregation:
   ```python
   payments = payments[~payments['payment_type'].isin(['not_defined'])]
   ```
 
-- [ ] **Aggregate to order-level** (NOT item-level like Repo 1 did — our decision is per-order, not per-item):
+- [x] **Aggregate to order-level** (NOT item-level like Repo 1 did — our decision is per-order, not per-item):
   ```python
   items_agg = order_items.groupby('order_id').agg({
       'price': 'sum',           # total_order_value
@@ -121,8 +122,8 @@ orders (base)
   }).reset_index()
   ```
 
-- [ ] Final merged shape expected: ~96,476 rows × ~35 raw columns
-- [ ] Save as `datasets/olist_merged_clean.csv`
+- [x] Final merged shape: 96,189 rows × 34 columns (after all filters)
+- [x] Save as `datasets/processed/olist_merged_clean.csv`
 
 ### 1.5 Missing Value Handling
 | Column | Strategy | Source |
@@ -134,7 +135,7 @@ orders (base)
 | `review_score` | Not a feature — only use to validate business framing | All repos confirm |
 
 ### 1.6 Month/Date Filtering
-- [ ] **FROM REPO 3:** Exclude incomplete months from analysis:
+- [x] **FROM REPO 3:** Exclude incomplete months from analysis:
   - Drop: 2016-09, 2016-10, 2016-11, 2016-12 (early launch, few orders)
   - Drop: 2018-09, 2018-10 (truncated data, incomplete orders)
   - This is consistent with our temporal split (train: Jan 2017–Dec 2017, val: Jan–Jun 2018, test: Jul–Aug 2018)
@@ -530,9 +531,12 @@ Document for each key feature:
 
 ---
 
-## Phase 5 — Business & Economic Analysis (Notebook: `05_business_economics.ipynb`)
+## Phase 5A — Economic Analysis (Notebook: `05_economic_analysis.ipynb`) — 30% weight
 
-### 5.1 Cost Matrix Translation
+> **PROJECT INSTRUCTIONS:** "show what happens when [economics] change. Which assumptions matter and which don't?"
+> This is the highest-weight section. Every analysis here must produce a number, table, or figure.
+
+### 5A.1 Cost Matrix Translation
 - [ ] At optimal threshold on test set: count TP, FP, TN, FN
 - [ ] Compute:
   ```
@@ -544,7 +548,7 @@ Document for each key feature:
 - [ ] Per 10,000 orders: how much does the model save in R$?
 - [ ] Annualize: ~100,000 orders/year → annual R$ savings
 
-### 5.2 Sensitivity Analysis — 4 Scenarios
+### 5A.2 Sensitivity Analysis — 4 Scenarios
 | Scenario | Review Loss | Intervention Cost | Key Question |
 |---|---|---|---|
 | Base case | R$150 | R$20 | Baseline |
@@ -554,28 +558,69 @@ Document for each key feature:
 - [ ] For each: recompute optimal threshold, total cost, net savings
 - [ ] Key finding: does the model remain profitable across all 4? (it should — asymmetry holds)
 - [ ] Plot: Net Savings vs Review Loss Cost (line chart) — show the break-even point
-- [ ] Show: insight survives perturbation (mirrors credit scoring lecture — **per project instructions**)
-  > **PROJECT INSTRUCTIONS:** "show what happens when [economics] change. Which assumptions matter and which don't?" This is the core requirement.
+- [ ] Show: insight survives perturbation (mirrors credit scoring lecture)
 
-### 5.3 Seasonal Threshold Strategy
+### 5A.3 Break-Even Analysis
+- [ ] At what FN cost (review loss) does the model stop being profitable?
+- [ ] At what intervention cost does it stop being profitable?
+- [ ] Produce a 2D heatmap: (review_loss × intervention_cost) → net savings. Color red where model loses money.
+- [ ] Key insight: "model is profitable for all FN costs above R$X" — this is the floor.
+
+### 5A.4 Threshold-Cost Tradeoff Curve
+- [ ] Plot: x = threshold (0.05 to 0.95), y = total cost (R$). One line per scenario.
+- [ ] Show that optimal threshold shifts left as FN cost increases (more aggressive flagging when stakes are higher).
+- [ ] Table: optimal threshold for each scenario.
+
+### 5A.5 Value of Information Analysis
+- [ ] Compare total cost for: (a) no model (flag nothing), (b) flag everything, (c) model at t=0.5, (d) model at t=optimal.
+- [ ] This quantifies the economic value of having a prediction model vs naive strategies.
+- [ ] Waterfall chart: cost savings decomposition (baseline → model → threshold optimization → each step saves R$X).
+
+### 5A.6 Seasonal Threshold Strategy
 - [ ] Does optimal threshold differ in Q2 (peak) vs Q3 (off-peak)?
 - [ ] If yes: recommend **dynamic threshold** — lower in peak season
-- [ ] Quantify: how much extra savings from dynamic vs single threshold?
+- [ ] Quantify: extra savings from dynamic vs single threshold
   > **FROM REPO 3:** During peak, seller_to_carrier time doubles. Dynamic threshold accounts for this structural change.
 
-### 5.4 Segment Prioritization
-- [ ] Top 5 highest-risk order profiles (distance bucket × category × season)
-- [ ] What % of late orders are captured by the top 3 risk profiles?
-- [ ] Can we define rule-based tiers? (always flag: furniture + cross-state + Q2)
-- [ ] Compare rule-based vs model on those segments
-- [ ] **FROM REPO 2:** Quantify the 5 N/NE risk clusters:
-  > "Orders in top 5% distance bucket have X% late rate vs Y% in bottom 95%. If rerouted by onboarding local sellers, saves R$Z annually."
+### 5A.7 Freight Cost Economics
+- [ ] **FROM REPO 2:** Freight cost vs distance regression — what is the marginal cost per km?
+- [ ] Compare freight cost for same-state vs cross-state orders (cost of geographic mismatch).
+- [ ] Estimate: if Olist onboarded sellers in 5 N/NE clusters, how much freight cost would decrease?
+- [ ] Freight-to-value ratio analysis: orders where freight > 30% of product value — late rate and customer satisfaction impact.
 
-### 5.5 Business Recommendation
-- [ ] Primary recommendation: deploy model at order placement, flag top X% as priority
-- [ ] Secondary: dynamic threshold by season
-- [ ] Third: invest in regional fulfillment for high-risk routes (geography dominates)
-  > **FROM REPO 2 (Route-Optimization):** 5 specific regions where onboarding sellers would structurally reduce delivery distances:
+### 5A.8 Customer Lifetime Value Impact
+- [ ] **FROM PAPER (Fig 13):** Late delivery → low review → churn. Quantify the chain:
+  - Late orders avg review: ~1.5 stars. On-time avg review: ~4.2 stars.
+  - Assume 1-2 star reviews → 60% churn, 4-5 star → 10% churn (industry benchmarks).
+  - CLV per customer: estimate from avg order value × avg orders per customer × margin.
+- [ ] Sensitivity: CLV × churn_delta × orders_flagged = total revenue protected.
+- [ ] This produces the annualized dollar value of the model.
+
+---
+
+## Phase 5B — Business Analysis & Recommendations (Notebook: `06_business_analysis.ipynb`) — 30% weight
+
+> **PROJECT INSTRUCTIONS:** "Identify a decision-maker. Who would use this model's output, and for what decision?"
+> Decision-maker: Operations Manager. Decision: flag risky orders for Priority Handling at order placement.
+
+### 5B.1 Delivery SLA Performance Analysis
+- [ ] Compute on-time delivery rate by month — trend chart.
+- [ ] **FROM REPO 3:** Three-stage delivery decomposition (purchase→approval, approval→carrier, carrier→customer).
+  - Show: seller_to_carrier is the bottleneck (25% of delivery time during peak, doubles from 50h to 80h).
+  - This justifies the seller-focused intervention recommendation.
+- [ ] SLA compliance by state — which states consistently miss delivery estimates?
+- [ ] SLA compliance by product category — which categories are structurally late?
+
+### 5B.2 Seller Performance Ranking
+- [ ] Rank sellers by late delivery rate (only sellers with >20 orders for statistical reliability).
+- [ ] Top 10 worst sellers — what % of all late orders do they cause?
+- [ ] **FROM REPO 3:** Seller dispatch time distribution — show the long tail of slow sellers.
+- [ ] Recommendation: target the worst 5% of sellers for SLA enforcement or removal.
+- [ ] **FROM REPO 2:** Seller geographic concentration — 80% from SP. What if non-SP sellers were onboarded?
+
+### 5B.3 Geographic Risk Analysis
+- [ ] Top 10 highest-risk routes (seller_state → customer_state) — late rate and volume.
+- [ ] **FROM REPO 2 (Route-Optimization):** 5 specific N/NE risk clusters:
   > | Cluster | Location | Products to stock |
   > |---|---|---|
   > | 1 | PR coast (-25.9°, -48.6°) | health_beauty, telephony |
@@ -583,14 +628,47 @@ Document for each key feature:
   > | 3 | RO/northwest (-8.8°, -63.9°) | sports_leisure |
   > | 4 | AM/Manaus (-3.1°, -60.0°) | computers, health_beauty, sports_leisure, telephony |
   > | 5 | MA coast (-2.5°, -44.2°) | health_beauty, telephony |
-- [ ] Fourth: enforce 48-hour seller dispatch SLA
-  > **FROM REPO 3:** Seller preparation = bottleneck during peak. Shopee (1.5 days), Lazada (2 days) already enforce this. Quantify: if dispatch drops from 80h to 48h, predicted late probability decreases.
-- [ ] ROI calculation: cost of building system vs annual savings
+- [ ] Map visualization: late rate by customer state (choropleth or bubble map).
+- [ ] Estimate: orders in N/NE states — what % are late vs national average?
+- [ ] Same-state vs cross-state delivery performance comparison.
 
-### 5.6 Connecting to Research Paper
+### 5B.4 Segment Prioritization
+- [ ] Top 5 highest-risk order profiles (distance bucket × category × season).
+- [ ] What % of late orders are captured by the top 3 risk profiles?
+- [ ] Define rule-based tiers: always flag (furniture + cross-state + Q2), never flag (same-city + light + off-peak).
+- [ ] Compare: rule-based tiers vs ML model — which captures more late orders at same FP rate?
+- [ ] Conclude whether ML adds value over simple rules (it should — interactions matter).
+
+### 5B.5 Operational Recommendations
+- [ ] **Recommendation 1:** Deploy model at order placement, flag top X% for Priority Handling.
+  - Quantify: at optimal threshold, X% of orders flagged, Y% of late orders caught.
+- [ ] **Recommendation 2:** Dynamic threshold by season — lower in peak (Nov-Dec, Q2).
+- [ ] **Recommendation 3:** Regional fulfillment investment for high-risk N/NE routes.
+  > **FROM REPO 2:** Onboarding sellers in 5 clusters would reduce avg distance by Z km for affected orders.
+- [ ] **Recommendation 4:** Enforce 48-hour seller dispatch SLA.
+  > **FROM REPO 3:** Shopee (1.5 days), Lazada (2 days) already enforce this. If dispatch drops from 80h to 48h, predicted late probability decreases.
+- [ ] **Recommendation 5:** Product-category-specific handling — bulky/furniture gets automatic premium logistics.
+
+### 5B.6 ROI of Model Deployment
+- [ ] Cost of building and maintaining the model (engineering time, compute, monitoring).
+- [ ] Annual savings from the model (from 5A.1).
+- [ ] Payback period: when does cumulative savings exceed deployment cost?
+- [ ] Compare: model-based flagging vs hiring 2 additional logistics coordinators.
+
+### 5B.7 Connecting to Research Paper
 - [ ] **FROM PAPER:** Cite: "Mangla & Soni (2025) demonstrated that delivery delay features are the strongest predictors of customer satisfaction on Olist (ROC-AUC=0.7389). Our work extends this by predicting delivery delay itself at order placement time — enabling proactive intervention."
-- [ ] Argue the economic chain: Our model → predicts late delivery → enables Priority Handling → prevents delay → protects review scores → protects cohort retention (Paper Fig 13 shows retention drops sharply after bad experience)
-  > **PROJECT INSTRUCTIONS:** "Identify a decision-maker. Who would use this model's output, and for what decision?" Our chain is: Operations Manager → sees P(late) > threshold → triggers Priority Handling → saves R$130 per correctly flagged order.
+- [ ] Argue the economic chain: model → predicts late → Priority Handling → prevents delay → protects reviews → protects retention.
+- [ ] **FROM PAPER (Fig 8):** Higher-priced products get lower satisfaction when late — justify price-weighted intervention.
+
+### 5B.8 Counterfactual Business Scenarios
+- [ ] **FROM REPO 1:** "What if this seller had average performance?" — counterfactual predict_proba.
+  ```python
+  sample_modified['seller_late_rate'] = sample_modified['seller_late_rate'].mean()
+  delta = np.mean(pred_original - pred_modified)
+  ```
+- [ ] "What if all orders were same-state?" — compute how much late rate would drop.
+- [ ] "What if Olist reduced estimated delivery buffer from 13.6 days to 10 days?" — how many more orders would be labeled late?
+- [ ] Each scenario quantifies the business value of a specific intervention.
 
 ---
 
@@ -621,7 +699,7 @@ Document for each key feature:
 ## Deliverable Checklist
 
 ### Mid-Project Check-In (Mar 17–21) — Written 2 pages
-- [ ] Show: cleaned merged dataset (shape, features)
+- [x] Show: cleaned merged dataset (shape, features) — 96,189 x 34, 7.94% late rate
 - [ ] Show: at least one trained baseline model with real numbers (AUC, recall, cost)
 - [ ] Show: one EDA finding with a figure
 - [ ] Revised plan: what remains, biggest risk
@@ -643,7 +721,7 @@ Document for each key feature:
 - [ ] **Citation:** Mangla & Soni (2025), DOI: https://doi.org/10.36676/jrps.v16.i4.337
 
 ### GitHub Repository (Apr 23)
-- [ ] Notebooks numbered: `01_data_cleaning.ipynb`, `02_eda_features.ipynb`, `03_modeling.ipynb`, `04_interpretation.ipynb`, `05_business_economics.ipynb`
+- [ ] Notebooks numbered: `01_data_cleaning.ipynb`, `02_eda_features.ipynb`, `03_modeling.ipynb`, `04_interpretation.ipynb`, `05_economic_analysis.ipynb`, `06_business_analysis.ipynb`
 - [ ] `requirements.txt` with all packages
 - [ ] `README.md`: project description, how to run, data access
 - [ ] No API keys or credentials in any file
