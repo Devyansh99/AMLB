@@ -756,3 +756,17 @@ Document for each key feature:
 | **Repo 2** (Olist-business-analysis) | Centroid geolocation, geodesic distance, Spearman correlation, GBM>RF, 5 high-risk N/NE clusters, payment installments as rural proxy, category translation merge | Random split, payment installments summed (use max), Euclidean for clustering (ok for clustering, not for analysis) |
 | **Repo 3** (olists-delivery-analysis) | 3-stage delivery decomposition, `not_defined` payment drop, `day_time()` bucketing, `is_end_of_month`, seller_monthly_volume, OLS statsmodels summary, month exclusion list | Random split, MinMaxScaler on all data (leakage), get_dummies for 27 states (high dim) |
 | **Paper** (Mangla & Soni 2025) | HistGradientBoosting as 5th model, Soft Voting Ensemble, Cost-Weighted MetaVote (adapted), `price_per_km` interaction, academic citation | Post-delivery features as inputs (leakage), unspecified balancing method, random split, no SHAP analysis |
+
+
+
+---
+
+What “extra strong” ML angle to add (doable and high impact)
+
+Add explainability package:
+SHAP global summary plus top-10 local explanations for flagged orders.
+Add actionability:
+For each flagged order, show top 3 risk drivers and suggested intervention type.
+Add reliability:
+Calibrated probabilities and risk bands (Low, Medium, High) with actual late rates.
+This turns project from “just prediction” into decision intelligence.
