@@ -26,8 +26,8 @@
     - Show that the model *still* provides a positive ROI under these perturbations.
 
 ## Phase 4: Final Delivery
-- [ ] **Final Showcase Notebook:** `final_business_impact_model.ipynb`.
-- [ ] **Visualizations:**
+- [x] **Final Showcase Notebook:** `final_business_impact_model.ipynb`.
+- [x] **Visualizations:**
     - "The Money Slide": Cumulative Loss Avoided by using the model vs. baseline.
     - "Responsibility Map": Sellers with the highest "Red Flag" rates due to prep delays.
     - "Regional Risk Heatmap": States where logistics expectations are failing.
