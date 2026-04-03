@@ -15,7 +15,7 @@
     - Calculated "Lift" vs. random outreach.
 - [x] **Module C: Responsibility Attribution (Seller vs. Carrier):**
     - Used `prep_to_delivery_ratio` to attribute blame for "Red Flags."
-- [ ] **Total Cost Optimization:**
+- [x] **Total Cost Optimization:**
     - Final tuning of the Economic Optimal Threshold.
 
 ## Phase 3: Optimization & Sensitivity Analysis
