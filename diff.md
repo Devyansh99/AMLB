@@ -70,4 +70,4 @@ The results for Class 1 (Dissatisfied) are lower because of a very common proble
 
 - get insight which is really helpful for the data
 - get more conceptual point, the data is not rich but we can do findings.
-- some features which are not in sellers control and re-rank the list
+- some features which are not in sellers control and re-rank the list (i think this will not work)
