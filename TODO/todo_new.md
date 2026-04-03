@@ -19,8 +19,8 @@
     - Final tuning of the Economic Optimal Threshold.
 
 ## Phase 3: Optimization & Sensitivity Analysis
-- [ ] **Total Cost vs. Threshold:** Find the Economic Optimal Threshold (Minimizing weighted cost).
-- [ ] **Scenario Stress-Testing:** 
+- [x] **Total Cost vs. Threshold:** Find the Economic Optimal Threshold (Minimizing weighted cost).
+- [x] **Scenario Stress-Testing:** 
     - "What if the cost of a voucher doubles?" 
     - "What if the churn rate of high-value customers is 2x higher?"
     - Show that the model *still* provides a positive ROI under these perturbations.
