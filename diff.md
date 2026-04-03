@@ -66,3 +66,8 @@ The results for Class 1 (Dissatisfied) are lower because of a very common proble
 
   In short: Class 1 is harder because there are fewer examples of it, and because people's feelings are more complicated
   than just shipping speeds.
+
+
+- get insight which is really helpful for the data
+- get more conceptual point, the data is not rich but we can do findings.
+- some features which are not in sellers control and re-rank the list
