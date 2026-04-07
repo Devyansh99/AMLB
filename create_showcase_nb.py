@@ -4,24 +4,35 @@ nb = nbf.v4.new_notebook()
 
 # Cell 1: Intro
 intro_md = """
-# Final Project Showcase: Olist E-Commerce Logistics and Customer Satisfaction
+# Project Documentation: Olist E-Commerce Logistics and Customer Satisfaction
 
-This notebook presents a comprehensive analysis of the Olist e-commerce dataset, addressing the challenge of predicting and mitigating customer dissatisfaction. 
+## 1. Problem Statement
+Olist, a Brazilian e-commerce platform, experiences variations in customer satisfaction primarily driven by the delivery experience. When deliveries fail to meet expectations—either due to extreme delays or broken delivery promises—customers leave negative reviews (Score < 4). 
+Currently, the raw dataset lacks deep transactional features, which makes it challenging for traditional machine learning models to find actionable patterns. 
 
-Rather than relying solely on traditional black-box machine learning approaches with shallow transactional features, this analysis focuses on **unquestionable spatial realities**, **interpretable operational bottlenecks**, and **proactive risk modeling**.
+**Our Goal:** 
+We aim to uncover *why* deliveries fail, *who* is responsible (the Seller or the Carrier), and build an **Early Warning System (Red Flag Predictor)**. This system will flag high-risk orders based on geographic realities and operational bottlenecks, allowing Olist to intervene proactively.
+
+## 2. Executive Summary of Findings
+1. **Geography is Destiny:** Spatial clustering and distance analysis mathematically prove that shipping distance is the primary killer of customer satisfaction. Extreme distances across Brazil exponentially increase the probability of a late delivery and a negative review.
+2. **The "Promise Gap" is the #1 Trigger:** Machine learning interpretability (SHAP) reveals that customers do not just hate slow shipping; they hate *broken promises*. The single biggest driver of a bad review is when the actual delivery date exceeds the initially estimated delivery date.
+3. **Sellers are a Massive Bottleneck:** Operational analysis shows that shipping carriers are not the only problem. A significant percentage of delays occur because the Seller takes too long to prepare and dispatch the package.
+4. **Actionable Root Cause Attribution:** By analyzing the "Prep-to-Delivery Ratio", our system not only flags a risky order but routes the blame to either the Seller Management team or the Logistics team.
+
+---
 
 ### The Notebook is structured in 6 Parts:
-1. **The Spatial Reality:** Proving that geography (distance) is a primary driver of delivery failure, using coordinate-level K-Means clustering.
-2. **Feature Synthesis & The Review Gap:** Engineering business-smart operational proxies (e.g., Delivery Gap, Target Encoding) and isolating the specific damage of logistics using the "Review Gap".
-3. **Operational Governance:** Identifying "Chronic Offender" sellers and simulating the platform-wide impact of offboarding them.
-4. **The "Red Flag" Predictor:** Building a robust XGBoost classifier to proactively identify high-risk orders and using SHAP values for explainability.
-5. **Responsibility Attribution:** A rule-based system to attribute predicted delays to either the Seller or the Carrier for actionable intervention.
-6. **Appendix - Economic Considerations (WIP):** A placeholder exploring how to translate these predictions into ROI using threshold optimization.
+1. **The Spatial Reality:** Proving that geography is a primary driver of delivery failure.
+2. **Feature Synthesis & The Review Gap:** Engineering business-smart operational proxies to overcome raw dataset limitations.
+3. **Operational Governance:** Identifying "Chronic Offender" sellers and their impact on the platform.
+4. **The "Red Flag" Predictor:** Building a robust XGBoost classifier to proactively identify high-risk orders.
+5. **Responsibility Attribution:** A rule-based system to attribute predicted delays to either the Seller or the Carrier.
+6. **Future Considerations (Economics):** A theoretical framework for translating these predictions into financial ROI.
 """
 nb.cells.append(nbf.v4.new_markdown_cell(intro_md))
 
 # Cell 2: Markdown
-nb.cells.append(nbf.v4.new_markdown_cell("### Initialization & Imports\nThis cell imports all the necessary libraries required for our analysis, including data manipulation (Pandas), visualization (Matplotlib, Seaborn, Folium), and Machine Learning (Scikit-Learn, XGBoost, SHAP)."))
+nb.cells.append(nbf.v4.new_markdown_cell("### Initialization & Imports\nWe begin by importing the necessary libraries for data manipulation, visualization, spatial mapping, and machine learning."))
 
 # Cell 3: Imports
 imports_code = """
@@ -45,7 +56,7 @@ plt.rcParams['figure.figsize'] = (10, 5)
 nb.cells.append(nbf.v4.new_code_cell(imports_code))
 
 # Cell 4: Markdown
-nb.cells.append(nbf.v4.new_markdown_cell("### Data Loading & Preprocessing\nThis cell loads the processed reviews dataset. It defines our target variable `is_dissatisfied` (Review Score < 4). We also compute `preparation_days` dynamically to ensure it is available for operational analysis."))
+nb.cells.append(nbf.v4.new_markdown_cell("### Data Loading & Preprocessing\nWe load the processed dataset and define our target variable `is_dissatisfied` (Review Score < 4). We also ensure operational features like `preparation_days` are calculated so we can assess seller efficiency."))
 
 # Cell 5: Data Loading
 data_loading_code = """
@@ -83,10 +94,12 @@ nb.cells.append(nbf.v4.new_code_cell(data_loading_code))
 part1_md = """
 ## Part 1: The Spatial Reality (Addressing the Geographic Variance)
 
-Previous analyses often relied on State-level aggregates. However, states in Brazil are massive, and taking an average across a state destroys nuance. 
+**Objective:** Prove that physical distance and geographic location are strong determinants of delivery failure.
+
+Previous analyses relied on State-level aggregates. However, states in Brazil are massive, and averaging metrics across an entire state destroys nuance. A customer in a major city has a vastly different logistics profile than someone in the rural interior of the same state. 
 
 ### Identifying Geographic Danger Zones
-We use **K-Means clustering on the actual coordinates** of the worst-performing orders (dissatisfied customers) to organically identify true logistics "Danger Zones" across Brazil.
+We use **K-Means clustering on the actual coordinates** of the worst-performing orders (dissatisfied customers) to organically identify true logistics "Danger Zones" across Brazil. This ignores political borders and focuses purely on spatial density.
 """
 nb.cells.append(nbf.v4.new_markdown_cell(part1_md))
 
@@ -114,7 +127,7 @@ df['risk_cluster'] = kmeans.predict(df[['customer_lat', 'customer_lng']])
 nb.cells.append(nbf.v4.new_code_cell(kmeans_code))
 
 # Cell 8: Markdown
-nb.cells.append(nbf.v4.new_markdown_cell("### Visualizing the Danger Zones\nHere we plot the identified Danger Zones on an interactive map of Brazil using `Folium`. **Note:** To prevent Jupyter rendering issues, we sample 1,500 data points for the heatmap layer to show the density of dissatisfied customers effectively."))
+nb.cells.append(nbf.v4.new_markdown_cell("### Visualizing the Danger Zones\nHere we plot the identified Danger Zones on an interactive map of Brazil using `Folium`. The markers show the mathematical center of the problem areas, while the heatmap layer shows the raw density of dissatisfied customers. *(Note: Sampled to 1,500 points to ensure smooth rendering).*"))
 
 # Cell 9: Folium Map
 map_code = """
@@ -133,18 +146,16 @@ for i, (lat, lng) in enumerate(cluster_centers):
     ).add_to(brazil_map)
 
 # Add a heatmap of a sample of dissatisfied orders to show density
-# Sample restricted to 1500 to ensure the map renders smoothly in all IDEs
 sample_bad = dissatisfied_orders.sample(min(1500, len(dissatisfied_orders)), random_state=42)
 heat_data = [[row['customer_lat'], row['customer_lng']] for index, row in sample_bad.iterrows()]
 HeatMap(heat_data, radius=12, blur=10, max_zoom=1).add_to(brazil_map)
 
-# Let the notebook natively display the map (fixes some rendering bugs)
 brazil_map
 """
 nb.cells.append(nbf.v4.new_code_cell(map_code))
 
 # Cell 10: Markdown
-nb.cells.append(nbf.v4.new_markdown_cell("### Mathematical Proof: Distance vs. Dissatisfaction\nThis cell categorizes `distance_km` into distinct buckets and calculates the Late Rate and Average Review Score for each bucket, providing an undeniable mathematical trend."))
+nb.cells.append(nbf.v4.new_markdown_cell("### Mathematical Proof: Distance vs. Dissatisfaction\nWe categorize the physical shipping distance (`distance_km`) into distinct buckets to see if the probability of a late delivery or a bad review increases as the package travels further. \n\n**Finding:** There is an undeniable mathematical trend. As distance increases, the Late Rate and Dissatisfaction Rate rise sharply, while the Average Review Score drops."))
 
 # Cell 11: Distance Correlation
 dist_corr_code = """
@@ -187,15 +198,15 @@ nb.cells.append(nbf.v4.new_code_cell(dist_corr_code))
 
 # Cell 12: Markdown
 part2_md = """
-## Part 2: Feature Synthesis & The Review Gap (Overcoming Dataset Limitations)
+## Part 2: Feature Synthesis & The Review Gap
 
-Our dataset is not rich enough in deep transactional details for traditional ML to find hidden magic. We must engineer "business-smart" proxies to help the model learn the true operational bottlenecks.
+**Objective:** Overcome the limitations of a shallow dataset by engineering "business-smart" operational metrics.
 
-### Engineering High-Value Features
+Since the dataset lacks deep transactional nuances, traditional ML struggles to find meaningful patterns. We engineered the following features to capture the true operational bottlenecks:
 1. **The Review Gap:** `expected_review_A - actual_review_score`. This isolates the exact damage caused by the delivery experience, proving that logistics ruins otherwise good products.
-2. **Delivery Delta (Promise Gap):** The difference between actual delivery days and estimated delivery days. Satisfaction is driven by expectations, not just speed.
-3. **Prep-to-Delivery Ratio:** What percentage of the total delivery time was the seller just preparing the package? (Highlights seller-side bottlenecks vs carrier delays).
-4. **Target Encoding (Sellers & Categories):** Instead of discarding high-cardinality categoricals like `seller_id` and `product_category_name`, we encode them with their historical dissatisfaction rate, giving the model crucial context ("Is this seller known for bad reviews?").
+2. **Delivery Delta (Promise Gap):** The difference between actual delivery days and estimated delivery days. *Satisfaction is driven by expectations, not just speed.*
+3. **Prep-to-Delivery Ratio:** What percentage of the total delivery time was the seller just preparing the package? This distinguishes seller-side delays from carrier-side delays.
+4. **Target Encoding (Sellers & Categories):** Instead of discarding high-cardinality identifiers like `seller_id`, we encode them with their historical dissatisfaction rate, giving the model context ("Is this seller historically problematic?").
 """
 nb.cells.append(nbf.v4.new_markdown_cell(part2_md))
 
@@ -204,15 +215,14 @@ fe_code = """
 # A. The Review Gap (Isolating Logistics Damage)
 if 'expected_review_A' in df.columns:
     df['review_gap'] = df['expected_review_A'] - df['review_score']
-    print(f"Average Review Score Drop (Gap) due to delivery: {df['review_gap'].mean():.3f} stars")
+    print(f"Average Review Score Drop (Gap) due to delivery experience: {df['review_gap'].mean():.3f} stars")
 else:
-    df['review_gap'] = 0 # Fallback if not using the 'preds' dataset
+    df['review_gap'] = 0 
 
 # B. Logistics Gap (Promise vs Reality)
 df['delivery_delta'] = df['actual_delivery_days'] - df['estimated_delivery_days']
 
 # C. Bottleneck Detection
-# If actual delivery days is missing or 0, we add 1 to avoid division by zero
 df['actual_delivery_days_safe'] = df['actual_delivery_days'].replace(0, 1).fillna(1)
 df['prep_to_delivery_ratio'] = df['preparation_days'] / df['actual_delivery_days_safe']
 
@@ -221,10 +231,9 @@ df['log_distance'] = np.log1p(df['distance_km'])
 if 'price' in df.columns:
     df['log_price'] = np.log1p(df['price'])
 else:
-    df['log_price'] = 0 # Fallback
+    df['log_price'] = 0
 
 # E. Target Encoding for High-Cardinality Categoricals
-# We map each seller and category to their historical dissatisfaction rate.
 global_mean = df['is_dissatisfied'].mean()
 
 for col in ['seller_id', 'product_category_name']:
@@ -232,7 +241,7 @@ for col in ['seller_id', 'product_category_name']:
         mapping = df.groupby(col)['is_dissatisfied'].mean()
         df[col + '_risk_encoded'] = df[col].map(mapping).fillna(global_mean)
     else:
-        df[col + '_risk_encoded'] = global_mean # Fallback
+        df[col + '_risk_encoded'] = global_mean 
 
 # Features for modeling
 features = [
@@ -241,13 +250,10 @@ features = [
     'risk_cluster', 'seller_id_risk_encoded', 'product_category_name_risk_encoded'
 ]
 
-# Ensure no NaNs in features
-X = df[features].copy()
+X = df[features].copy().fillna(df[features].median())
 y = df['is_dissatisfied']
 
-X = X.fillna(X.median())
-
-print("Feature Engineering Complete. Ready for modeling.")
+print("Feature Engineering Complete. Dataset is ready for modeling.")
 display(X.head())
 """
 nb.cells.append(nbf.v4.new_code_cell(fe_code))
@@ -256,8 +262,12 @@ nb.cells.append(nbf.v4.new_code_cell(fe_code))
 part3_md = """
 ## Part 3: Operational Governance (Seller Accountability)
 
-Before we apply complex ML, we must look at basic operational governance. Who is responsible for delays? 
-Here, we plot the "Seller Risk Quadrant" (Preparation Time vs. Review Score) to identify "Chronic Offenders." We then simulate the impact on the platform's average review score if Olist were to simply offboard the worst 5% of sellers. This is a highly actionable, non-ML business insight.
+**Objective:** Extract non-ML, actionable business insights regarding seller performance.
+
+Before applying complex machine learning, we look at basic operational governance. Who is responsible for the delays? 
+We plot the "Seller Risk Quadrant" (Preparation Time vs. Review Score) to identify **"Chronic Offenders."** 
+
+**Finding:** By simulating the removal of just the worst 5% of sellers, we observe a noticeable improvement in the platform's overall average review score. This is a highly actionable insight for the Seller Management team.
 """
 nb.cells.append(nbf.v4.new_markdown_cell(part3_md))
 
@@ -313,11 +323,9 @@ nb.cells.append(nbf.v4.new_code_cell(gov_code))
 part4_md = """
 ## Part 4: The "Red Flag" Predictor (Interpretable ML)
 
-We train an XGBoost model to predict whether an order will be a "Red Flag" (Dissatisfied). 
-Because unhappy customers are the minority (~21%), we use `scale_pos_weight` to force the model to care more about catching them (Recall).
+**Objective:** Build an Early Warning System to predict dissatisfied customers before they receive their order.
 
-### Training the Risk Classifier
-This cell trains the XGBoost algorithm. It splits the data while preserving class proportions (stratified), computes the class imbalance ratio to assign higher penalty to false negatives during training, and fits the model. We output the ROC-AUC score, which measures the model's ability to discriminate between satisfied and dissatisfied customers.
+We train an XGBoost model to predict whether an order will be a "Red Flag" (Dissatisfied). Because unhappy customers are the minority class (~21%), we use `scale_pos_weight` to force the model to prioritize catching these failures (optimizing for Recall).
 """
 nb.cells.append(nbf.v4.new_markdown_cell(part4_md))
 
@@ -352,13 +360,12 @@ print(f"\\nModel trained. ROC-AUC Score: {roc_auc_score(y_test, y_prob):.4f}")
 nb.cells.append(nbf.v4.new_code_cell(xgb_code))
 
 # Cell 18: Markdown
-nb.cells.append(nbf.v4.new_markdown_cell("### Unboxing the Model with SHAP Values\nThis cell generates **SHAP (SHapley Additive exPlanations)** values to make the model unquestionable. Instead of just presenting a 'black box' score, this visualization explicitly proves *why* the model makes its predictions. It shows that the model is heavily relying on our engineered spatial, operational, and encoded historical features, completely validating our business logic."))
+nb.cells.append(nbf.v4.new_markdown_cell("### Unboxing the Model with SHAP Values\nTo ensure our model is not a questionable 'black box', we generate **SHAP (SHapley Additive exPlanations)** values. \n\n**Finding:** The SHAP summary plot explicitly proves *why* the model makes its predictions. It relies heavily on `delivery_delta` (The Promise Gap) and `log_distance` (Geography), alongside historical seller performance. This completely validates our engineered business logic."))
 
 # Cell 19: SHAP Values
 shap_code = """
 # Explain the model's predictions using SHAP
 explainer = shap.TreeExplainer(xgb_model)
-# Calculate SHAP values for a sample of the test set to save computation time
 X_test_sample = X_test.sample(2000, random_state=42)
 shap_values = explainer.shap_values(X_test_sample)
 
@@ -377,8 +384,10 @@ nb.cells.append(nbf.v4.new_code_cell(shap_code))
 part5_md = """
 ## Part 5: Responsibility Attribution & Action
 
-ML is only useful if it drives action. If the model flags an order as a "Red Flag", who does the Operations Manager talk to?
-Here, we use a simple rule-based approach on the flagged orders to attribute the likely root cause of the delay/dissatisfaction to either the **Seller** (they took too long to prepare it) or the **Carrier** (the seller was fast, but the truck was slow).
+**Objective:** Make the ML predictions actionable for the Operations team.
+
+Machine learning is only useful if it drives business action. If the model flags an order as a "Red Flag", who should the Operations Manager hold accountable? 
+We use a rule-based engine to attribute the root cause of the flagged delay to either the **Seller** (they took too long to prepare it) or the **Carrier** (the seller was fast, but the transit was slow).
 
 *Rule: If Seller Preparation Time accounts for more than 30% of the total delivery time, the bottleneck is the Seller.*
 """
@@ -419,11 +428,15 @@ nb.cells.append(nbf.v4.new_code_cell(attribution_code))
 
 # Cell 22: Markdown
 part6_md = """
-## Appendix: Economic Considerations (WIP)
+## Part 6: Future Considerations (Economic ROI Modeling)
 
-*Note: This section explores the potential financial ROI of the model. It is currently kept as an appendix and placeholder for future economic scenario planning, as actual operational costs may vary.*
+**Objective:** Outline how this model can be tied to financial outcomes once appropriate financial data is available.
 
-We can sweep thresholds to find the point that minimizes Total Business Cost based on arbitrary assumptions (e.g., FP = R$15, FN = R$155).
+*Note: The current dataset lacks explicit longitudinal customer retention data or true lifetime value (LTV). Therefore, the following section is a theoretical framework designed to demonstrate how the business could monetize these ML predictions as a "next step."*
+
+If we assume a theoretical cost matrix—for instance, sending a proactive apology voucher costs R$15 (False Positive risk), while a deeply dissatisfied customer costs the business R$155 in lost future value (False Negative risk)—we can shift the decision threshold away from the standard 0.5 to minimize the Total Business Cost.
+
+This proves that the goal of the model is not raw accuracy, but **cost-sensitive risk mitigation**.
 """
 nb.cells.append(nbf.v4.new_markdown_cell(part6_md))
 
@@ -439,6 +452,7 @@ for t in thresholds:
     fp = np.sum((y_pred_t == 1) & (y_test.values == 0))
     fn = np.sum((y_pred_t == 0) & (y_test.values == 1))
     
+    # Applying the theoretical cost assumption
     total_cost = (fp * 15) + (fn * 155)
     costs.append(total_cost)
 
