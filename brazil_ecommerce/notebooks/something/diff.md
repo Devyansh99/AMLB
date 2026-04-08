@@ -106,3 +106,114 @@ To elevate this project from an "assignment level" to a Senior Data Scientist / 
       true logistical delays."
 
   That is a bulletproof, MBA-level data science presentation. How does that framing sound to you?
+
+
+  ---
+
+   Complete Analysis of Final_Project_Showcase.ipynb
+
+    What's Happening (Structure Summary)
+
+    The notebook flows through 7 parts:
+
+
+    ┌───────────────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
+    │ Part                      │ What It Does                                                                      │
+    ├───────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+    │ 1. Spatial Reality        │ K-Means clustering on dissatisfied customer coords → 5 "Danger Zones" mapped w... │
+    │ 2. Feature Synthesis      │ Engineers delivery_delta, prep_to_delivery_ratio, log_distance, target-encoded sel... │
+    │ 3. Operational Governance │ Identifies 243 "Chronic Offender" sellers via prep time vs. review score quadrant │
+    │ 4. Red Flag Predictor     │ XGBoost classifier predicting is_dissatisfied (AUC = 0.7298) + SHAP interpreta... │
+    │ **5. Responsibility Attr... │ Rule-based: if prep_time > 30% of total delivery time → blame Seller, else Car... │
+    │ 6. Economic ROI           │ Theoretical cost matrix (FP=R$15, FN=R$155) with threshold optimization           │
+    │ **7. Next Warehouse Opti... │ Places 3 warehouses at top K-Means cluster centroids, simulates distance savings  │
+    └───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+
+    ---
+
+    What Makes Sense ✅
+
+     1. Overall narrative arc is solid. Spatial analysis → feature engineering → ML → SHAP → attribution → economics →
+        optimization. This is a logical business story.
+
+     2. Feature engineering is reasonable. delivery_delta (actual - estimated), prep_to_delivery_ratio, log transforms of
+         distance/price, and target encoding for high-cardinality features are all standard and valid.
+
+     3. SHAP analysis validates business logic. The model correctly relies heavily on delivery_delta and log_distance,
+        which aligns with the EDA findings.
+
+     4. The NLP companion notebook is a strong addition. Separating seller faults from logistics faults is a genuinely
+        insightful idea.
+
+     5. Warehouse optimization concept is creative. Using K-Means cluster centers of dissatisfied customers as candidate
+        warehouse locations is a clever heuristic.
+
+    ---
+
+    What Is Questionable ⚠️
+
+    1. Data Leakage — Critical Issue
+    The feature set includes `delivery_delta` and `actual_delivery_days` as features. These are post-purchase quantities.
+     At order placement time (when the "Red Flag" should be raised), you don't yet know:
+     - How long delivery actually took (actual_delivery_days)
+     - Whether it was late (delivery_delta = actual - estimated)
+     - The prep_to_delivery_ratio
+
+    This is the exact same leakage problem the todo1_old.md flagged about the research paper. The notebook claims to be
+    an "Early Warning System" but uses information that is only available after delivery. The SHAP plot showing
+    delivery_delta as the #1 feature is essentially cheating — of course it's the #1 feature, it is the label in
+    disguise.
+
+    2. `is_late` as a Feature
+    The feature list explicitly includes is_late (binary: was the order late?). This is the target variable itself (or a
+    direct derivative of it). Using it as a feature to predict is_dissatisfied means the model is essentially learning:
+    "if an order was late, the customer will be dissatisfied." This is circular and trivially true.
+
+    3. Random Split, Not Temporal Split
+    The notebook uses train_test_split(..., random_state=42, stratify=y) — a random split. This causes temporal leakage:
+    orders from the same time period appear in both train and test. The todo_new.md explicitly noted that temporal splits
+     were a key methodological advantage of this project, but this notebook doesn't use them.
+
+    4. The 30% Threshold for Attribution is Arbitrary
+    Part 5 uses a hardcoded 30% threshold (prep_to_delivery_ratio > 0.3) to blame sellers. There's no justification for
+    why 30% is the right cutoff. This should be derived from data (e.g., median prep ratio of known-seller-fault cases)
+    or at least sensitivity-analyzed.
+
+    5. Warehouse Optimization is Oversimplified
+    Part 7 places warehouses at the centroids of the 3 densest K-Means clusters of dissatisfied customers. Problems:
+     - K-Means centroids of customer locations ≠ optimal facility locations (no consideration of existing seller
+       locations, infrastructure costs, road networks, or demand volume weighting)
+     - The simulation assumes all dissatisfied orders could be rerouted to these warehouses, ignoring that the original
+       seller still needs to stock/ship from somewhere
+     - "Distance saved" is computed but not translated to actual business impact (reduced late rate, improved
+       satisfaction)
+
+    6. AUC = 0.7298 is Mediocre
+    An AUC of 0.73 is acceptable but not impressive for a showcase notebook. There's no model comparison (no baseline, no
+     ensemble), no hyperparameter tuning, and no threshold optimization beyond the theoretical discussion in Part 6.
+
+    7. Part 6 is Theoretical, Not Executed
+    The economic ROI section describes a cost matrix framework but the code cell appears to only show a confusion
+    matrix/cost visualization. There's no actual threshold sweep, no break-even analysis, and no quantified business
+    impact — just a theoretical discussion.
+
+    8. `review_gap` Feature is Near-Zero
+    The notebook prints: "Average Review Score Drop (Gap) due to delivery experience: 0.003 stars". This is essentially
+    zero, meaning the "Review Gap" feature adds no signal. It should have been dropped or the methodology re-examined.
+
+    ---
+
+    Bottom Line
+
+    The notebook looks polished and tells a compelling business story, but has a fundamental data leakage problem. It
+    uses delivery_delta, actual_delivery_days, and is_late as features — all of which are unknowable at order placement
+    time. This makes the AUC of 0.73 inflated and the "Early Warning System" claim invalid.
+
+    To fix it:
+     1. Remove delivery_delta, actual_delivery_days, is_late, and prep_to_delivery_ratio from the feature set
+     2. Use only features available at order placement (distance, price, seller history, category, payment type,
+        seasonality, etc.)
+     3. Use a temporal train/test split
+     4. Re-run the model — the AUC will drop, but the results will be valid
+     5. The warehouse optimization should use a proper Facility Location Problem formulation (p-median or uncapacitated
+        facility location), not just K-Means centroids
