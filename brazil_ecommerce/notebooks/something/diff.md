@@ -217,3 +217,36 @@ To elevate this project from an "assignment level" to a Senior Data Scientist / 
      4. Re-run the model — the AUC will drop, but the results will be valid
      5. The warehouse optimization should use a proper Facility Location Problem formulation (p-median or uncapacitated
         facility location), not just K-Means centroids
+
+  ---
+
+  ## Progress Checklist (What Has Been Done in /notebooks/something)
+
+  - [x] Created strategy and critique notes in `diff.md`
+  - [x] Defined advanced upgrade tracks: Operations Research, NLP, Causal Inference, Survival Analysis
+  - [x] Completed detailed review of `Final_Project_Showcase.ipynb` methodology
+  - [x] Identified major leakage risks and documented fixes (feature timing + temporal split)
+
+  - [x] Built `review_root_cause_nlp.ipynb`
+  - [x] Implemented zero-shot multilingual NLP root-cause tagging for negative reviews
+  - [x] Added Portuguese label set + English business mapping
+  - [x] Added root-cause visualization and business action insights
+  - [x] Saved NLP output to `../../datasets/processed/nlp_root_causes.csv`
+
+  - [x] Built `kaggle.ipynb`
+  - [x] Added Kaggle-compatible paths and GPU/CPU-aware setup
+  - [x] Enabled full-batch NLP categorization and Kaggle output export
+
+  - [x] Built `final.ipynb` (clean end-to-end pipeline)
+  - [x] Added leakage-free, pre-purchase feature engineering
+  - [x] Added NLP-based purification (remove seller-fault noise)
+  - [x] Added temporal split (2017 train, H2 2018 test)
+  - [x] Trained XGBoost with SHAP interpretability
+  - [x] Added cost-based threshold optimization
+  - [x] Added multimodal seller clustering
+  - [x] Added financial ROI estimation
+  - [x] Added warehouse placement simulation + distance savings
+  - [x] Added post-delivery sensitivity analysis to show timing effect
+
+  - [ ] Pending: dedicated separate Causal Inference notebook in this folder
+  - [ ] Pending: dedicated separate Survival Analysis notebook in this folder
