@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survival Analysis - Simple Explainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  </script>
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #fffef9;
+      --ink: #1f2937;
+      --muted: #5b6777;
+      --accent: #1d4ed8;
+      --accent2: #0f766e;
+      --line: #dbe5d4;
+      --warn: #9a3412;
+      --warnbg: #fff7ed;
+      --shadow: 0 12px 28px rgba(31, 41, 55, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, #e7eefc 0%, transparent 35%),
+        radial-gradient(circle at 88% 15%, #dcfce7 0%, transparent 35%),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px 52px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e40af, #1d4ed8 55%, #0f766e);
+      color: #eff6ff;
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #dbeafe;
+      max-width: 860px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    h2 {
+      margin: 2px 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.1rem;
+    }
+
+    h3 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ecfeff;
+      color: #155e75;
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .step {
+      border: 1px dashed #b8c7e6;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fbff;
+      font-size: 0.92rem;
+    }
+
+    .n {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    .mini-flow {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.92rem;
+    }
+
+    .box {
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      font-weight: 600;
+    }
+
+    .arrow { color: #475569; font-weight: 700; }
+
+    .curve {
+      height: 170px;
+      border: 1px solid #d9e4f8;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f8fbff, #eef5ff);
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .curve svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .formula {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #eefbf5;
+      border: 1px solid #bbf7d0;
+      color: #14532d;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .warn {
+      margin-top: 8px;
+      background: var(--warnbg);
+      border: 1px solid #fdba74;
+      color: var(--warn);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.92rem;
+    }
+
+    .foot {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 900px) {
+      .span-6, .span-4 { grid-column: span 12; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .steps { grid-template-columns: 1fr; }
+      .hero { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Survival Analysis Notebook: Simple Explanation</h1>
+      <p>
+        This notebook predicts when a delivery happens. It uses time-to-event modeling,
+        not just a late or not-late label.
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card span-12">
+        <span class="tag">Main Idea</span>
+        <h2>What is Survival Analysis here?</h2>
+        <ul>
+          <li><strong>Duration:</strong> days from approval to delivery (or censor date).</li>
+          <li><strong>Event:</strong> delivered (event_observed = 1).</li>
+          <li><strong>Censored:</strong> not delivered yet by cutoff (event_observed = 0).</li>
+        </ul>
+        <div class="mini-flow">
+          <span class="box">Order approved</span>
+          <span class="arrow">-&gt;</span>
+          <span class="box">Track days</span>
+          <span class="arrow">-&gt;</span>
+          <span class="box">Delivered or censored</span>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Notebook Pipeline</h3>
+        <div class="steps">
+          <div class="step"><span class="n">1</span>Load data</div>
+          <div class="step"><span class="n">2</span>Build duration and event</div>
+          <div class="step"><span class="n">3</span>Kaplan-Meier curves</div>
+          <div class="step"><span class="n">4</span>Cox model for drivers</div>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>How Censoring Works</h3>
+        <div class="mermaid">
+flowchart LR
+  A[Order Approved] --> B{Delivered by reference date?}
+  B -->|Yes| C[Event = 1, end date = delivered date]
+  B -->|No| D[Event = 0, end date = reference date]
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Kaplan-Meier Curve Meaning</h3>
+        <p>
+          It shows probability that package is still not delivered by day t.
+          Curve starts high and goes down as deliveries happen.
+        </p>
+        <div class="curve" aria-label="Simple survival curve illustration">
+          <svg viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg" role="img">
+            <line x1="42" y1="20" x2="42" y2="190" stroke="#64748b" stroke-width="2"/>
+            <line x1="42" y1="190" x2="470" y2="190" stroke="#64748b" stroke-width="2"/>
+            <polyline points="45,40 90,55 130,70 170,95 215,110 260,130 310,145 360,160 420,172 465,178"
+                      fill="none" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round"/>
+            <text x="8" y="24" font-size="12" fill="#334155">High</text>
+            <text x="8" y="188" font-size="12" fill="#334155">Low</text>
+            <text x="410" y="210" font-size="12" fill="#334155">Days</text>
+          </svg>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Distance Group Comparison</h3>
+        <p>
+          The notebook also draws two KM curves: short-distance vs long-distance.
+          If long-distance curve stays higher, those orders remain undelivered longer.
+        </p>
+        <div class="formula">Higher curve = slower delivery</div>
+      </article>
+
+      <article class="card span-12">
+        <h3>Cox Proportional Hazards (Simple interpretation)</h3>
+        <div class="mermaid">
+flowchart LR
+  X[Features: distance, weight, price, freight, items, seller size, cross-state] --> M[Cox Model]
+  M --> O[Hazard Ratio for each feature]
+        </div>
+        <ul>
+          <li><strong>Hazard Ratio &gt; 1:</strong> tends to speed up delivery.</li>
+          <li><strong>Hazard Ratio &lt; 1:</strong> tends to slow down delivery.</li>
+          <li><strong>p-value &lt; 0.05:</strong> statistically stronger evidence in this run.</li>
+        </ul>
+      </article>
+
+      <article class="card span-6">
+        <h3>Predicted Curves (Step 7)</h3>
+        <p>
+          Notebook creates two representative profiles (shorter route vs longer route)
+          and predicts survival curves from Cox model.
+        </p>
+      </article>
+
+      <article class="card span-6">
+        <h3>Assumption Check (Optional)</h3>
+        <p>
+          Cox assumes proportional hazards. The notebook includes an optional diagnostic
+          check to test this assumption.
+        </p>
+        <div class="warn">If assumptions are violated, interpretation should be more careful.</div>
+      </article>
+
+      <article class="card span-12">
+        <h3>Business Takeaway</h3>
+        <ul>
+          <li>Survival analysis answers timing risk, not just late or not-late.</li>
+          <li>Kaplan-Meier gives a day-by-day risk view of still-not-delivered orders.</li>
+          <li>Cox model shows which factors delay or accelerate delivery.</li>
+          <li>This helps SLA planning and earlier interventions for risky shipments.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="foot">Use this page like mini slides: scroll section by section during explanation.</p>
+  </div>
+</body>
+</html>

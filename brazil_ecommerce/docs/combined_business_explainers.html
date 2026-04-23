@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AMLB Detailed Presentation Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f7fb;
+      --slide: #ffffff;
+      --ink: #1f2937;
+      --muted: #5a6678;
+      --line: #d9e2ef;
+      --blue: #1d4ed8;
+      --teal: #0f766e;
+      --rose: #be123c;
+      --amber: #b45309;
+      --shadow: 0 14px 30px rgba(31, 41, 55, 0.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Manrope, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, #dbeafe 0%, transparent 36%),
+        radial-gradient(circle at 88% 12%, #dcfce7 0%, transparent 36%),
+        var(--bg);
+      overflow: hidden;
+    }
+
+    .deck {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .title {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .counter {
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1d4ed8, #0f766e);
+      transition: width 0.25s ease;
+    }
+
+    .slides {
+      position: relative;
+      flex: 1;
+    }
+
+    .slide {
+      display: none;
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      background: var(--slide);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 26px;
+    }
+
+    .slide.active { display: block; }
+
+    .slide h1 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      line-height: 1.15;
+    }
+
+    .slide h2 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.26rem;
+    }
+
+    .slide h3 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.02rem;
+    }
+
+    .lead {
+      margin: 0;
+      color: #334155;
+      max-width: 980px;
+    }
+
+    .pill {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      border: 1px solid;
+    }
+
+    .blue { color: #1e3a8a; background: #eff6ff; border-color: #bfdbfe; }
+    .teal { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
+    .rose { color: #9f1239; background: #fff1f2; border-color: #fecdd3; }
+    .amber { color: #92400e; background: #fffbeb; border-color: #fcd34d; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fcfdff;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    ul { margin: 0; padding-left: 20px; }
+
+    .formula {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .note {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 0.92rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-family: Manrope, sans-serif;
+      font-weight: 700;
+      background: #ffffff;
+      color: #0f172a;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .toc-list {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .toc-list button {
+      text-align: left;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .span-8, .span-6, .span-4 { grid-column: span 12; }
+      .toc-list { grid-template-columns: 1fr; }
+      .slide { padding: 18px; }
+    }
+  </style>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progressFill');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let index = 0;
+
+    function renderMermaidForSlide(slide) {
+      const nodes = slide.querySelectorAll('.mermaid');
+      nodes.forEach((node) => {
+        if (!node.dataset.rendered) {
+          node.dataset.rendered = '1';
+          mermaid.run({ nodes: [node] });
+        }
+      });
+    }
+
+    function goTo(newIndex) {
+      if (newIndex < 0 || newIndex >= slides.length) return;
+      slides[index].classList.remove('active');
+      index = newIndex;
+      slides[index].classList.add('active');
+      counter.textContent = `Slide ${index + 1} / ${slides.length}`;
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === slides.length - 1;
+      renderMermaidForSlide(slides[index]);
+    }
+
+    prevBtn.addEventListener('click', () => goTo(index - 1));
+    nextBtn.addEventListener('click', () => goTo(index + 1));
+
+    document.querySelectorAll('[data-go]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = Number(btn.getAttribute('data-go'));
+        goTo(target);
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        goTo(index + 1);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        goTo(index - 1);
+      }
+      if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      }
+      if (e.key === 'End') {
+        e.preventDefault();
+        goTo(slides.length - 1);
+      }
+    });
+
+    goTo(0);
+  </script>
+</head>
+<body>
+  <div class="deck">
+    <div class="topbar">
+      <div class="title">AMLB Detailed Presentation Deck</div>
+      <div id="counter" class="counter">Slide 1 / 12</div>
+    </div>
+    <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+
+    <div class="slides">
+      <section class="slide active">
+        <span class="pill blue">Overview</span>
+        <h1>Logistics Analytics and Decision Deck</h1>
+        <p class="lead">
+          This single presentation combines four tracks: Causal Inference, NLP Root Cause,
+          Survival Analysis, and Temporal Deployment. Use ArrowRight and ArrowLeft keys to move slide by slide.
+        </p>
+        <div class="grid">
+          <article class="card span-12">
+            <h3>Deck objective</h3>
+            <ul>
+              <li>Explain what each notebook does in business language.</li>
+              <li>Connect analysis to deployable operational actions.</li>
+              <li>Show why the final decision system is realistic and ROI-driven.</li>
+            </ul>
+          </article>
+          <article class="card span-12">
+            <h3>Jump to section</h3>
+            <div class="toc-list">
+              <button data-go="2">Causal Inference</button>
+              <button data-go="4">NLP Root Cause</button>
+              <button data-go="6">Survival Analysis</button>
+              <button data-go="8">Temporal Deployment</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill amber">Problem Context</span>
+        <h2>Business Question We Are Solving</h2>
+        <div class="grid">
+          <article class="card span-8">
+            <h3>Main operational pain</h3>
+            <ul>
+              <li>Delayed deliveries do not always create angry reviews.</li>
+              <li>Not all bad reviews are logistics faults.</li>
+              <li>If Olist sends vouchers to everyone, cost explodes.</li>
+            </ul>
+            <div class="formula">
+              Goal: target the right delayed orders, at the right time, with minimum cost.
+            </div>
+          </article>
+          <article class="card span-4">
+            <h3>Model strategy</h3>
+            <ul>
+              <li>Clean label noise using NLP.</li>
+              <li>Estimate causal drivers.</li>
+              <li>Forecast timing with survival models.</li>
+              <li>Deploy with temporal split and ROI thresholding.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill teal">Causal Inference</span>
+        <h2>What causal notebook proves</h2>
+        <div class="grid">
+          <article class="card span-6">
+            <h3>Design</h3>
+            <ul>
+              <li>Outcome: dissatisfied review score.</li>
+              <li>Treatment: long distance shipment.</li>
+              <li>Confounders: product and seller characteristics.</li>
+            </ul>
+          </article>
+          <article class="card span-6">
+            <h3>DAG assumptions</h3>
+            <div class="mermaid">
+flowchart LR
+  C[Weight Price Freight Seller Region] --> T[Long Distance]
+  C --> Y[Dissatisfaction]
+  T --> Y
+            </div>
+          </article>
+          <article class="card span-12">
+            <h3>Methods used</h3>
+            <ul>
+              <li>Backdoor linear regression.</li>
+              <li>Propensity score matching.</li>
+              <li>Refuters and sensitivity analysis for credibility.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill teal">Causal Inference</span>
+        <h2>How to present the result</h2>
+        <div class="grid">
+          <article class="card span-8">
+            <h3>Plain-language interpretation</h3>
+            <ul>
+              <li>After adjusting for observed confounders, long distance increases dissatisfaction risk.</li>
+              <li>Interpretation is in percentage-point effect, not absolute certainty.</li>
+              <li>Result is useful for prioritizing logistics mitigation on long routes.</li>
+            </ul>
+            <div class="formula">
+              ATE greater than zero means long distance causally raises bad-review probability on average.
+            </div>
+          </article>
+          <article class="card span-4">
+            <h3>Assumptions to state</h3>
+            <ul>
+              <li>No major unobserved confounder.</li>
+              <li>DAG direction is approximately correct.</li>
+              <li>Treated and untreated groups have overlap.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill rose">NLP Root Cause</span>
+        <h2>Why NLP cleaning is mandatory</h2>
+        <div class="grid">
+          <article class="card span-6">
+            <h3>Problem</h3>
+            <ul>
+              <li>Many low-star reviews are product quality or wrong-item issues.</li>
+              <li>If treated as logistics failures, the model learns wrong patterns.</li>
+            </ul>
+          </article>
+          <article class="card span-6">
+            <h3>Approach</h3>
+            <ul>
+              <li>Zero-shot multilingual model on Portuguese review text.</li>
+              <li>Map predictions to business-friendly English categories.</li>
+              <li>Produce clean root-cause labels for pipeline use.</li>
+            </ul>
+          </article>
+          <article class="card span-12">
+            <div class="mermaid">
+flowchart TD
+  A[Low-score text reviews] --> B[Zero-shot multilingual NLP]
+  B --> C[Logistics vs Product vs Service root cause]
+  C --> D[Cleaner labels for model training]
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill rose">NLP Root Cause</span>
+        <h2>Business action layer from NLP output</h2>
+        <div class="grid">
+          <article class="card span-4">
+            <h3>Seller quality control</h3>
+            <ul>
+              <li>Track defective and wrong-product tags per seller.</li>
+              <li>Trigger warning, audit, or suspension thresholds.</li>
+            </ul>
+          </article>
+          <article class="card span-4">
+            <h3>Logistics optimization</h3>
+            <ul>
+              <li>Use logistics-tagged complaints for routing and SLA focus.</li>
+              <li>Avoid wasting logistics budget on non-logistics complaints.</li>
+            </ul>
+          </article>
+          <article class="card span-4">
+            <h3>Support escalation</h3>
+            <ul>
+              <li>Refund and service complaints routed to specialist teams.</li>
+              <li>Improves recovery speed and customer trust.</li>
+            </ul>
+          </article>
+          <article class="card span-12">
+            <div class="formula">Cleaner labels lead to higher model reliability and better spending decisions.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill blue">Survival Analysis</span>
+        <h2>Adding the time dimension</h2>
+        <div class="grid">
+          <article class="card span-6">
+            <h3>Core concepts</h3>
+            <ul>
+              <li>Duration: days from approval to delivery.</li>
+              <li>Event observed: delivered.</li>
+              <li>Censored: delivery not observed by reference date.</li>
+            </ul>
+          </article>
+          <article class="card span-6">
+            <h3>Methods</h3>
+            <ul>
+              <li>Kaplan-Meier curves for in-transit probability.</li>
+              <li>Cox PH model for hazard ratio interpretation.</li>
+            </ul>
+            <div class="formula">HR above 1 means faster delivery, HR below 1 means slower delivery.</div>
+          </article>
+          <article class="card span-12">
+            <h3>Censoring logic</h3>
+            <div class="mermaid">
+flowchart LR
+  A[Order approved] --> B{Delivered by reference date}
+  B -->|Yes| C[Event = 1]
+  B -->|No| D[Event = 0]
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill blue">Survival Analysis</span>
+        <h2>Operational value of survival outputs</h2>
+        <div class="grid">
+          <article class="card span-8">
+            <h3>Why this is stronger than late-or-not-late classification</h3>
+            <ul>
+              <li>Shows when risk accumulates over days, not only if delay exists.</li>
+              <li>Supports proactive messaging windows and SLA intervention timing.</li>
+              <li>Identifies factors with strongest delay acceleration or drag effects.</li>
+            </ul>
+          </article>
+          <article class="card span-4">
+            <h3>Decisions enabled</h3>
+            <ul>
+              <li>When to trigger customer updates.</li>
+              <li>Which orders need manual intervention.</li>
+              <li>Where to tighten process standards.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill amber">Temporal Deployment</span>
+        <h2>Production simulation and model roles</h2>
+        <div class="grid">
+          <article class="card span-12">
+            <h3>Temporal split choice</h3>
+            <ul>
+              <li>Train: year 2017.</li>
+              <li>Test: H2 2018.</li>
+              <li>Purpose: mimic real-world deployment and avoid look-ahead effects.</li>
+            </ul>
+          </article>
+          <article class="card span-6">
+            <h3>Model A</h3>
+            <ul>
+              <li>Predicts delays from pre-shipment features.</li>
+              <li>Expected weak AUC without carrier route data.</li>
+            </ul>
+          </article>
+          <article class="card span-6">
+            <h3>Model B</h3>
+            <ul>
+              <li>Predicts anger risk among confirmed delayed orders.</li>
+              <li>This is the deployable decision model.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill amber">Temporal Deployment</span>
+        <h2>ROI thresholding policy</h2>
+        <div class="grid">
+          <article class="card span-8">
+            <h3>Cost framework used in notebook</h3>
+            <ul>
+              <li>Voucher cost: R$15 per flagged order.</li>
+              <li>Bad-review penalty: R$50.</li>
+              <li>Voucher effectiveness assumption: 40 percent.</li>
+              <li>Threshold chosen to minimize total expected cost.</li>
+            </ul>
+            <div class="formula">Total cost = voucher spend + missed bad-review cost - prevented bad-review value</div>
+          </article>
+          <article class="card span-4">
+            <h3>Practical deployment loop</h3>
+            <div class="mermaid">
+flowchart TD
+  A[Carrier delay list at 9am] --> B[Score with Model B]
+  B --> C[Apply threshold]
+  C --> D[Send vouchers only to high-risk]
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill amber">Temporal Deployment</span>
+        <h2>Advanced validation blocks in temporal notebook</h2>
+        <div class="grid">
+          <article class="card span-4">
+            <h3>Fridge insight</h3>
+            <ul>
+              <li>Heavy and far delayed orders trigger worse ratings.</li>
+              <li>Supports differential logistics strategy by payload and distance.</li>
+            </ul>
+          </article>
+          <article class="card span-4">
+            <h3>Causal IPW check</h3>
+            <ul>
+              <li>Estimates causal effect of far shipment on bad reviews under delay.</li>
+              <li>Uses bootstrap confidence interval for significance check.</li>
+            </ul>
+          </article>
+          <article class="card span-4">
+            <h3>Warehouse heatmap</h3>
+            <ul>
+              <li>KMeans on angry-late coordinates proposes candidate DC locations.</li>
+              <li>Supports geography-led mitigation planning.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <span class="pill blue">Final Summary</span>
+        <h2>End-to-end decision recommendation</h2>
+        <div class="grid">
+          <article class="card span-12">
+            <ul>
+              <li>Use NLP to remove non-logistics complaint noise before modeling.</li>
+              <li>Use causal analysis to support why distance mitigation matters.</li>
+              <li>Use survival outputs for timing-sensitive interventions.</li>
+              <li>Use temporal deployment with Model B and ROI threshold as production policy.</li>
+            </ul>
+            <div class="formula">
+              Recommended system: carrier-confirmed delay trigger plus Model B risk triage plus thresholded voucher action.
+            </div>
+            <div class="note">
+              Navigation reminder: ArrowRight moves forward, ArrowLeft moves backward, Home jumps first slide, End jumps last slide.
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn" type="button">Previous</button>
+      <button id="nextBtn" type="button">Next</button>
+    </div>
+    <div class="hint">Keyboard controls: ArrowLeft, ArrowRight, PageUp, PageDown, Home, End</div>
+  </div>
+</body>
+</html>
