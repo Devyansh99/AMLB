@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Causal Inference Explained Simply</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  </script>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --paper: #fffdf8;
+      --ink: #1f2a37;
+      --muted: #5f6b7a;
+      --accent: #0f766e;
+      --accent-2: #c2410c;
+      --line: #e9dfd1;
+      --shadow: 0 10px 25px rgba(31, 42, 55, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, #e7f6f5 0%, transparent 35%),
+        radial-gradient(circle at 90% 20%, #ffe9d6 0%, transparent 40%),
+        var(--bg);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 18px 56px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f766e, #115e59 60%, #134e4a);
+      color: #f7fffd;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: 1.02rem;
+      max-width: 850px;
+      color: #d7f8f4;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    h2 {
+      margin: 4px 0 10px;
+      font-size: 1.18rem;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--accent);
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #e6fffb;
+      color: #065f59;
+      border: 1px solid #bef3eb;
+      font-weight: 700;
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .step-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .step {
+      border: 1px dashed #bcd5d2;
+      background: #f3fbfa;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 0.92rem;
+    }
+
+    .num {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.8rem;
+      margin-right: 6px;
+    }
+
+    .bars {
+      display: flex;
+      gap: 26px;
+      align-items: end;
+      min-height: 220px;
+      padding: 8px 4px 0;
+    }
+
+    .bar-wrap {
+      flex: 1;
+      text-align: center;
+    }
+
+    .bar {
+      margin: 0 auto;
+      width: 70%;
+      border-radius: 8px 8px 0 0;
+      position: relative;
+      transition: transform 0.25s ease;
+    }
+
+    .bar:hover { transform: translateY(-4px); }
+
+    .bar-short { background: #2b9d8f; height: 152px; }
+    .bar-long { background: #e37c5f; height: 178px; }
+
+    .bar-label {
+      margin-top: 8px;
+      font-weight: 700;
+    }
+
+    .bar-val {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .formula {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: "Space Grotesk", sans-serif;
+      color: #9a3412;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .warning {
+      border-left: 4px solid var(--accent-2);
+      background: #fff8f1;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #7c2d12;
+      font-size: 0.94rem;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .span-6, .span-4 { grid-column: span 12; }
+      .step-list { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .step-list { grid-template-columns: 1fr; }
+      .hero { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Causal Inference Notebook: Simple Visual Explanation</h1>
+      <p>
+        Main question: Does long shipping distance actually cause more unhappy customers,
+        or is it only connected to other factors like heavy products, high freight, and seller speed?
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card span-12">
+        <div class="pill">Notebook Goal</div>
+        <h2>Cause vs Correlation</h2>
+        <ul>
+          <li>Correlation says two things move together.</li>
+          <li>Causation says one thing directly changes the other.</li>
+          <li>This notebook tries to estimate a fair causal effect of shipping distance.</li>
+        </ul>
+        <div class="step-list">
+          <div class="step"><span class="num">1</span>Load and prepare data</div>
+          <div class="step"><span class="num">2</span>Build treatment and outcome</div>
+          <div class="step"><span class="num">3</span>Control confounders</div>
+          <div class="step"><span class="num">4</span>Estimate ATE and test robustness</div>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Key Variables</h3>
+        <ul>
+          <li><strong>Outcome:</strong> is_dissatisfied (1 if review score &lt; 4)</li>
+          <li><strong>Treatment:</strong> long_distance (1 if distance is above median)</li>
+          <li><strong>Confounders:</strong> weight, price, freight, seller speed, seller size, items, north indicator</li>
+        </ul>
+      </article>
+
+      <article class="card span-6">
+        <h3>What Confounder Means</h3>
+        <p>
+          A confounder is a variable that affects both distance and dissatisfaction.
+          If you ignore it, your distance effect can be biased.
+        </p>
+        <div class="warning">
+          Example: Heavy products may travel farther and also create more complaints.
+          Without adjustment, distance may look worse than it really is.
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Raw Check (Not Causal Yet)</h3>
+        <p>Long-distance orders show higher bad-review rate in the basic comparison:</p>
+        <div class="bars" aria-label="Bar chart showing short and long distance dissatisfaction rates">
+          <div class="bar-wrap">
+            <div class="bar bar-short"></div>
+            <div class="bar-label">Short</div>
+            <div class="bar-val">about 19.2%</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar bar-long"></div>
+            <div class="bar-label">Long</div>
+            <div class="bar-val">about 22.4%</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h3>Causal DAG Assumption</h3>
+        <div class="mermaid">
+flowchart LR
+  C1[Weight / Price / Freight / Seller Factors / Region] --> T[Long Distance]
+  C1 --> Y[Dissatisfaction]
+  T --> Y
+        </div>
+      </article>
+
+      <article class="card span-12">
+        <h3>How ATE Is Estimated</h3>
+        <ul>
+          <li>Method 1: Backdoor linear regression</li>
+          <li>Method 2: Propensity score matching (PSM)</li>
+        </ul>
+        <div class="formula">
+          ATE = average(Outcome if Long Distance) - average(Outcome if Short Distance), after adjustment
+        </div>
+        <p>
+          Notebook interpretation example: around +1.52 percentage points,
+          meaning long distance likely increases dissatisfaction by about 1.52 points on average.
+        </p>
+      </article>
+
+      <article class="card span-4">
+        <h3>Refutation Check 1</h3>
+        <p>Random Common Cause: adds random noise confounder and checks if estimate collapses.</p>
+      </article>
+
+      <article class="card span-4">
+        <h3>Refutation Check 2</h3>
+        <p>Placebo Treatment: uses fake treatment and expects near-zero effect.</p>
+      </article>
+
+      <article class="card span-4">
+        <h3>Sensitivity Check</h3>
+        <p>Tests how hidden confounding strength would change your estimated effect.</p>
+      </article>
+
+      <article class="card span-12">
+        <h3>Version 2 (Advanced Part)</h3>
+        <div class="mermaid">
+flowchart TD
+  A[Use continuous distance_km] --> B[Fit CausalForestDML]
+  B --> C[Estimate effect per +1 km and +100 km]
+  C --> D[Find subgroup effects by state and product category]
+  D --> E[Run hidden-confounding sensitivity grid]
+        </div>
+        <p>
+          This improves realism because distance is not truly just short vs long.
+          It also helps identify where the effect is strongest.
+        </p>
+      </article>
+
+      <article class="card span-12">
+        <h3>Simple Business Meaning</h3>
+        <ul>
+          <li>Distance appears to have a real negative impact on customer satisfaction.</li>
+          <li>Operational actions: reduce long-distance pain with faster prep, better packaging, stronger regional logistics.</li>
+          <li>This is still an estimate, not absolute truth, because hidden confounders may exist.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="footer">
+      Tip: Open this file in your browser and present it like slides by scrolling section by section.
+    </p>
+  </div>
+</body>
+</html>
